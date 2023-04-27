@@ -67,32 +67,32 @@ train_MsMag = np.load(path+"trainMagnetometer.npy")
 # print(train_Label.shape)
 
 
-# def Normalize(X):
-#   norm = []
-#   for I in range(len(X)):
-#     norm.append(normalize(X[I]))
-#   norm=np.array(norm)
-#   return norm
+def Normalize(X):
+  norm = []
+  for I in range(len(X)):
+    norm.append(normalize(X[I]))
+  norm=np.array(norm)
+  return norm
 
-# train_acc = Normalize(train_acc)
-# train_gyro = Normalize(train_gyro)
-# train_grav = Normalize(train_grav)
-# train_linAcc = Normalize(train_linAcc)
-# train_MsMag = Normalize(train_MsMag)
-# train_MsAcc = Normalize(train_MsAcc)
-# train_MsGyro = Normalize(train_MsGyro)
-# train_jinsAcc = Normalize(train_jinsAcc)
-# train_jinsGyro = Normalize(train_jinsGyro)
+train_acc = Normalize(train_acc)
+train_gyro = Normalize(train_gyro)
+train_grav = Normalize(train_grav)
+train_linAcc = Normalize(train_linAcc)
+train_MsMag = Normalize(train_MsMag)
+train_MsAcc = Normalize(train_MsAcc)
+train_MsGyro = Normalize(train_MsGyro)
+train_jinsAcc = Normalize(train_jinsAcc)
+train_jinsGyro = Normalize(train_jinsGyro)
 
-# test_acc = Normalize(test_acc)
-# test_gyro = Normalize(test_gyro)
-# test_grav = Normalize(test_grav)
-# test_linAcc = Normalize(test_linAcc)
-# test_MsMag = Normalize(test_MsMag)
-# test_MsAcc = Normalize(test_MsAcc)
-# test_MsGyro = Normalize(test_MsGyro)
-# test_jinsAcc = Normalize(test_jinsAcc)
-# test_jinsGyro = Normalize(test_jinsGyro)
+test_acc = Normalize(test_acc)
+test_gyro = Normalize(test_gyro)
+test_grav = Normalize(test_grav)
+test_linAcc = Normalize(test_linAcc)
+test_MsMag = Normalize(test_MsMag)
+test_MsAcc = Normalize(test_MsAcc)
+test_MsGyro = Normalize(test_MsGyro)
+test_jinsAcc = Normalize(test_jinsAcc)
+test_jinsGyro = Normalize(test_jinsGyro)
 
 
 
@@ -163,16 +163,16 @@ print(train_labels.shape, test_labels.shape)
 
 
 # Split the data into training and validation sets
-x_train, x_val, y_train, y_val = train_test_split(train_data, train_labels, test_size=0.2, random_state=42)
+# x_train, x_val, y_train, y_val = train_test_split(train_data, train_labels, test_size=0.2, random_state=42)
 
-print("Shape of training + validation Data")
-print(np.shape(x_train), np.shape(y_train))
+# print("Shape of training + validation Data")
+# print(np.shape(x_train), np.shape(x_val))
 
-y_train = to_categorical(y_train, num_classes=55)
-y_val = to_categorical(y_val, num_classes=55)
+# y_train = to_categorical(y_train, num_classes=55)
+# y_val = to_categorical(y_val, num_classes=55)
 
-print("Shape of training + validation Labels")
-print(np.shape(y_train), np.shape(y_val))
+# print("Shape of training + validation Labels")
+# print(np.shape(y_train), np.shape(y_val))
 
 
 # HYPER PARAMTERS
@@ -203,7 +203,7 @@ activationMLP = 'relu'
 inputMLP = 2500
 
 # Training parameters
-batchSize = 400
+batchSize = 200
 numberOfEpochs = 30
 learningRate = 0.001
 
@@ -245,7 +245,11 @@ def autoencoder1(
     return model
 
 
-# x_train = x_train.reshape((3291*400,27))
+# Reshape the input data to (3291, 400*3*9)
+# x_train = np.reshape(x_train, (x_train.shape[0], -1))
+train_data = np.reshape(train_data, (train_data.shape[0],-1))
+input_shape=(400*3*9,)
+
 
 model = autoencoder1(inputShape=input_shape,
                           inputMLP=inputMLP,
@@ -259,13 +263,14 @@ model.compile(
 )
 
 
+model.fit(x=train_data, y=train_data, epochs=numberOfEpochs, batch_size=batchSize, validation_split=0.2)
 
-history = model.fit(
-    x_train, y_train,
-    validation_data=(x_val, y_val),
-    epochs=numberOfEpochs,
-    batch_size=batchSize
-)
+# history = model.fit(
+#     x_train, y_train,
+#     validation_data=(x_val, y_val),
+#     epochs=numberOfEpochs,
+#     batch_size=batchSize
+# )
 
 
 # model.save('mlp1')
