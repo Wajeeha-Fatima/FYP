@@ -120,11 +120,11 @@ all_data = np.stack([train_acc_reshaped, train_gyro_reshaped, train_grav_reshape
 all_Label = np.append(train_Label, test_Label, axis=-1)
 
 # 70% training data + labels
-train_data = all_data[: int(all_data.shape[0]*0.7)]
+train_data = all_data[: int(all_data.shape[0]*0.9)]
 # 30% testing data + labels
-test_data = all_data[int(all_data.shape[0]*0.7):]
-train_labels = all_Label[: int(all_Label.shape[0]*0.7)]
-test_labels = all_Label[int(all_Label.shape[0]*0.7):]
+test_data = all_data[int(all_data.shape[0]*0.9):]
+train_labels = all_Label[: int(all_Label.shape[0]*0.9)]
+test_labels = all_Label[int(all_Label.shape[0]*0.9):]
 
 print("\nShape of training and testin data + labels...\n")
 print(train_data.shape, test_data.shape)
@@ -169,7 +169,7 @@ outputLSTM = 100
 
 # Parameters of the dense layer
 activationMLP = 'relu'
-inputMLP = 500
+inputMLP = 1000
 
 # Training parameters
 batchSize = 400
@@ -233,6 +233,9 @@ history = model.fit(
     epochs=numberOfEpochs,
     batch_size=batchSize
 )
+
+
+# model.save('cnn1.h5')
 
 
 estimatedLabels = np.argmax(model.predict(test_data),axis=-1)

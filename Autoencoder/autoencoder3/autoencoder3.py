@@ -1,3 +1,5 @@
+# Average 60+% accuracy
+
 # -*- coding: utf-8 -*-
 """CNN.ipynb
 
@@ -63,6 +65,35 @@ train_MsAcc = np.load(path+"trainMSAccelerometer.npy")
 train_MsGyro = np.load(path + "trainMSGyroscope.npy")
 train_MsMag = np.load(path+"trainMagnetometer.npy")
 # print(train_Label.shape)
+
+
+# def Normalize(X):
+#   norm = []
+#   for I in range(len(X)):
+#     norm.append(normalize(X[I]))
+#   norm=np.array(norm)
+#   return norm
+
+# train_acc = Normalize(train_acc)
+# train_gyro = Normalize(train_gyro)
+# train_grav = Normalize(train_grav)
+# train_linAcc = Normalize(train_linAcc)
+# train_MsMag = Normalize(train_MsMag)
+# train_MsAcc = Normalize(train_MsAcc)
+# train_MsGyro = Normalize(train_MsGyro)
+# train_jinsAcc = Normalize(train_jinsAcc)
+# train_jinsGyro = Normalize(train_jinsGyro)
+
+# test_acc = Normalize(test_acc)
+# test_gyro = Normalize(test_gyro)
+# test_grav = Normalize(test_grav)
+# test_linAcc = Normalize(test_linAcc)
+# test_MsMag = Normalize(test_MsMag)
+# test_MsAcc = Normalize(test_MsAcc)
+# test_MsGyro = Normalize(test_MsGyro)
+# test_jinsAcc = Normalize(test_jinsAcc)
+# test_jinsGyro = Normalize(test_jinsGyro)
+
 
 
 """# Reshape and stack Data Before Fitting to Model"""
@@ -169,78 +200,82 @@ outputLSTM = 100
 
 # Parameters of the dense layer
 activationMLP = 'relu'
-inputMLP = 500
+inputMLP = 2500
 
 # Training parameters
 batchSize = 400
-numberOfEpochs = 50
+numberOfEpochs = 30
 learningRate = 0.001
 
 input_shape = (400,3,9)
 nbClasses = 55
 
 #-------------------------------------------------------------------------------------------------------
-# normMlp3: define a batch normalization + 3 hidden layers MLP
+# autoencoder3: define a autoencoder with 3 hidden layers
 #-------------------------------------------------------------------------------------------------------
-def normMlp3(
+def autoencoder3(
     inputShape,
     inputMLP1,
     inputMLP2,
     inputMLP3,
     activationMLP,
-    nbClasses,
-    withSoftmax=True):
+    decoder=True):
 
     model = Sequential()
 
-    #TODO: test different batch norm placement
+    model.add(BatchNormalization(input_shape=inputShape))
 
-    """
-    model.add(BatchNormalization(input_shape=inputShape)) 
-    model.add(Flatten())
-    model.add(Dense(inputMLP1, activation=activationMLP))
-    model.add(Dense(inputMLP2, activation=activationMLP))
-    model.add(Dense(inputMLP3, activation=activationMLP))
-    """
+    # Dense layer 1 of the encoder
+    model.add(Dense(inputMLP1,activation=activationMLP))
+    print('Encoder dense 1 shape: ------------------------------')
+    print(model.layers[-1].output_shape)
 
-    """
-    model.add(Flatten(input_shape=inputShape))
-    model.add(Dense(inputMLP1, activation='linear'))
-    model.add(BatchNormalization()) 
-    model.add(Activation(activationMLP))
-    model.add(Dense(inputMLP2, activation='linear'))
-    model.add(BatchNormalization()) 
-    model.add(Activation(activationMLP))
-    model.add(Dense(inputMLP3, activation='linear'))
-    model.add(BatchNormalization()) 
-    model.add(Activation(activationMLP))
-    """
+    # Dense layer 2 of the encoder
+    model.add(Dense(inputMLP2,activation=activationMLP))
+    print('Encoder dense 2 shape: ------------------------------')
+    print(model.layers[-1].output_shape)
 
-    model.add(Flatten(input_shape=inputShape))
-    model.add(Dense(inputMLP1, activation=activationMLP))
-    model.add(BatchNormalization()) 
-    model.add(Dense(inputMLP2, activation=activationMLP))
-    model.add(BatchNormalization()) 
-    model.add(Dense(inputMLP3, activation=activationMLP))
-    model.add(BatchNormalization()) 
+    # Dense layer 3 of the encoder
+    model.add(Dense(inputMLP3,activation=activationMLP))
+    print('Encoder dense 3 shape: ------------------------------')
+    print(model.layers[-1].output_shape)
 
-    # Softmax layer
-    if withSoftmax:
-        model.add(Dense(nbClasses, activation='softmax'))
 
-    # Return the model
+    if decoder:
+
+        # Dense layer 1 of the decoder
+        model.add(Dense(inputMLP3,activation=activationMLP))
+        print('Decoder dense 1 shape: ------------------------------')
+        print(model.layers[-1].output_shape)
+
+        # Dense layer 1 of the decoder
+        model.add(Dense(inputMLP2,activation=activationMLP))
+        print('Decoder dense 2 shape: ------------------------------')
+        print(model.layers[-1].output_shape)
+
+        # Dense layer 2 of the decoder
+        model.add(Dense(inputMLP1,activation=activationMLP))
+        print('Decoder dense 3 shape: ------------------------------')
+        print(model.layers[-1].output_shape)
+
+        # Batch normalization
+        model.add(BatchNormalization())
+
+        # Output layer
+        model.add(Dense(inputShape[0],activation='linear')) 
+        print('Output shape: ------------------------------')
+        print(model.layers[-1].output_shape)      
+
     return model
 
 
 
-
-
-model = normMlp3(inputShape=input_shape,
-                 inputMLP1=inputMLP,
-                 inputMLP2=inputMLP,
-                 inputMLP3=inputMLP,
-                 activationMLP=activationMLP,
-                 nbClasses=nbClasses)
+model = autoencoder3(
+              inputShape=input_shape,
+              inputMLP1=inputMLP,
+              inputMLP2=inputMLP,
+              inputMLP3=inputMLP,
+              activationMLP=activationMLP)
 
 
 model.compile(
@@ -256,6 +291,8 @@ history = model.fit(
     batch_size=batchSize
 )
 
+
+# model.save('mlp1')
 
 estimatedLabels = np.argmax(model.predict(test_data),axis=-1)
 estimatedLabels = estimatedLabels.flatten()

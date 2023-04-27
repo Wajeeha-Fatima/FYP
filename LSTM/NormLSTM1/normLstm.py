@@ -1,3 +1,5 @@
+# Average 60+% accuracy
+
 # -*- coding: utf-8 -*-
 """CNN.ipynb
 
@@ -33,6 +35,10 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import BatchNormalization, Conv2D, MaxPooling2D, Flatten, Dense
 from tensorflow.keras.utils import to_categorical
+from keras.layers.core import Reshape
+from keras.layers import LSTM
+
+tf.compat.v1.enable_eager_execution()
 
 """# Loading Data"""
 
@@ -63,6 +69,35 @@ train_MsAcc = np.load(path+"trainMSAccelerometer.npy")
 train_MsGyro = np.load(path + "trainMSGyroscope.npy")
 train_MsMag = np.load(path+"trainMagnetometer.npy")
 # print(train_Label.shape)
+
+
+# def Normalize(X):
+#   norm = []
+#   for I in range(len(X)):
+#     norm.append(normalize(X[I]))
+#   norm=np.array(norm)
+#   return norm
+
+# train_acc = Normalize(train_acc)
+# train_gyro = Normalize(train_gyro)
+# train_grav = Normalize(train_grav)
+# train_linAcc = Normalize(train_linAcc)
+# train_MsMag = Normalize(train_MsMag)
+# train_MsAcc = Normalize(train_MsAcc)
+# train_MsGyro = Normalize(train_MsGyro)
+# train_jinsAcc = Normalize(train_jinsAcc)
+# train_jinsGyro = Normalize(train_jinsGyro)
+
+# test_acc = Normalize(test_acc)
+# test_gyro = Normalize(test_gyro)
+# test_grav = Normalize(test_grav)
+# test_linAcc = Normalize(test_linAcc)
+# test_MsMag = Normalize(test_MsMag)
+# test_MsAcc = Normalize(test_MsAcc)
+# test_MsGyro = Normalize(test_MsGyro)
+# test_jinsAcc = Normalize(test_jinsAcc)
+# test_jinsGyro = Normalize(test_jinsGyro)
+
 
 
 """# Reshape and stack Data Before Fitting to Model"""
@@ -169,60 +204,46 @@ outputLSTM = 100
 
 # Parameters of the dense layer
 activationMLP = 'relu'
-inputMLP = 500
+inputMLP = 2500
 
 # Training parameters
 batchSize = 400
-numberOfEpochs = 50
+numberOfEpochs = 30
 learningRate = 0.001
 
 input_shape = (400,3,9)
 nbClasses = 55
+timeWindow = 400
+nbSensors = 9
 
 #-------------------------------------------------------------------------------------------------------
-# normMlp3: define a batch normalization + 3 hidden layers MLP
+# normLstm: define a batch normalization + LSTM DNN
 #-------------------------------------------------------------------------------------------------------
-def normMlp3(
+def normLstm(
     inputShape,
-    inputMLP1,
-    inputMLP2,
-    inputMLP3,
+    timeWindow,
+    nbSensors,
+    outputLSTM,
+    inputMLP,
     activationMLP,
     nbClasses,
     withSoftmax=True):
 
     model = Sequential()
+    nbFeaturePerSensor = 3
 
-    #TODO: test different batch norm placement
+    # Batch normalization layer
+    model.add(BatchNormalization(input_shape=inputShape))
 
-    """
-    model.add(BatchNormalization(input_shape=inputShape)) 
-    model.add(Flatten())
-    model.add(Dense(inputMLP1, activation=activationMLP))
-    model.add(Dense(inputMLP2, activation=activationMLP))
-    model.add(Dense(inputMLP3, activation=activationMLP))
-    """
+    # LSTM layer with a many-to-one implementation
+    # Note: size of the output = (outputSizeLastConv, outputLSTM)
+    model.add(Reshape((timeWindow, nbSensors * nbFeaturePerSensor)))
+    model.add(LSTM(outputLSTM))
+  
+    # Fully-connected layer
+    model.add(Dense(inputMLP, activation=activationMLP))
 
-    """
-    model.add(Flatten(input_shape=inputShape))
-    model.add(Dense(inputMLP1, activation='linear'))
-    model.add(BatchNormalization()) 
-    model.add(Activation(activationMLP))
-    model.add(Dense(inputMLP2, activation='linear'))
-    model.add(BatchNormalization()) 
-    model.add(Activation(activationMLP))
-    model.add(Dense(inputMLP3, activation='linear'))
-    model.add(BatchNormalization()) 
-    model.add(Activation(activationMLP))
-    """
-
-    model.add(Flatten(input_shape=inputShape))
-    model.add(Dense(inputMLP1, activation=activationMLP))
-    model.add(BatchNormalization()) 
-    model.add(Dense(inputMLP2, activation=activationMLP))
-    model.add(BatchNormalization()) 
-    model.add(Dense(inputMLP3, activation=activationMLP))
-    model.add(BatchNormalization()) 
+    #model.add(Dropout(0.5))
 
     # Softmax layer
     if withSoftmax:
@@ -234,13 +255,14 @@ def normMlp3(
 
 
 
+model = normLstm(inputShape=input_shape,
+                     timeWindow=timeWindow,
+                     nbSensors=nbSensors,
+                     outputLSTM=outputLSTM,
+                     inputMLP=inputMLP,
+                     activationMLP=activationMLP,
+                     nbClasses=nbClasses)
 
-model = normMlp3(inputShape=input_shape,
-                 inputMLP1=inputMLP,
-                 inputMLP2=inputMLP,
-                 inputMLP3=inputMLP,
-                 activationMLP=activationMLP,
-                 nbClasses=nbClasses)
 
 
 model.compile(
@@ -256,6 +278,8 @@ history = model.fit(
     batch_size=batchSize
 )
 
+
+# model.save('mlp1')
 
 estimatedLabels = np.argmax(model.predict(test_data),axis=-1)
 estimatedLabels = estimatedLabels.flatten()

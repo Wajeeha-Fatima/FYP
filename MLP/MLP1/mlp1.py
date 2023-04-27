@@ -1,3 +1,5 @@
+# Average 60+% accuracy
+
 # -*- coding: utf-8 -*-
 """CNN.ipynb
 
@@ -65,6 +67,35 @@ train_MsMag = np.load(path+"trainMagnetometer.npy")
 # print(train_Label.shape)
 
 
+# def Normalize(X):
+#   norm = []
+#   for I in range(len(X)):
+#     norm.append(normalize(X[I]))
+#   norm=np.array(norm)
+#   return norm
+
+# train_acc = Normalize(train_acc)
+# train_gyro = Normalize(train_gyro)
+# train_grav = Normalize(train_grav)
+# train_linAcc = Normalize(train_linAcc)
+# train_MsMag = Normalize(train_MsMag)
+# train_MsAcc = Normalize(train_MsAcc)
+# train_MsGyro = Normalize(train_MsGyro)
+# train_jinsAcc = Normalize(train_jinsAcc)
+# train_jinsGyro = Normalize(train_jinsGyro)
+
+# test_acc = Normalize(test_acc)
+# test_gyro = Normalize(test_gyro)
+# test_grav = Normalize(test_grav)
+# test_linAcc = Normalize(test_linAcc)
+# test_MsMag = Normalize(test_MsMag)
+# test_MsAcc = Normalize(test_MsAcc)
+# test_MsGyro = Normalize(test_MsGyro)
+# test_jinsAcc = Normalize(test_jinsAcc)
+# test_jinsGyro = Normalize(test_jinsGyro)
+
+
+
 """# Reshape and stack Data Before Fitting to Model"""
 # changing shape of sensor data to (#,400,3)
 # downsample
@@ -119,12 +150,12 @@ all_data = np.stack([train_acc_reshaped, train_gyro_reshaped, train_grav_reshape
 
 all_Label = np.append(train_Label, test_Label, axis=-1)
 
-# 70% training data + labels
-train_data = all_data[: int(all_data.shape[0]*0.7)]
-# 30% testing data + labels
-test_data = all_data[int(all_data.shape[0]*0.7):]
-train_labels = all_Label[: int(all_Label.shape[0]*0.7)]
-test_labels = all_Label[int(all_Label.shape[0]*0.7):]
+# 90% training data + labels
+train_data = all_data[: int(all_data.shape[0]*0.9)]
+# 10% testing data + labels
+test_data = all_data[int(all_data.shape[0]*0.9):]
+train_labels = all_Label[: int(all_Label.shape[0]*0.9)]
+test_labels = all_Label[int(all_Label.shape[0]*0.9):]
 
 print("\nShape of training and testin data + labels...\n")
 print(train_data.shape, test_data.shape)
@@ -169,12 +200,12 @@ outputLSTM = 100
 
 # Parameters of the dense layer
 activationMLP = 'relu'
-inputMLP = 500
+inputMLP = 2500
 
 # Training parameters
 batchSize = 400
-numberOfEpochs = 50
-learningRate = 0.01
+numberOfEpochs = 30
+learningRate = 0.001
 
 input_shape = (400,3,9)
 nbClasses = 55
@@ -215,7 +246,7 @@ model = normMlp1(inputShape=input_shape,
 
 model.compile(
     loss='categorical_crossentropy',
-    optimizer=Adam(learning_rate=0.001),
+    optimizer=Adam(learning_rate=learningRate),
     metrics=['accuracy']
 )
 
@@ -226,6 +257,8 @@ history = model.fit(
     batch_size=batchSize
 )
 
+
+# model.save('mlp1')
 
 estimatedLabels = np.argmax(model.predict(test_data),axis=-1)
 estimatedLabels = estimatedLabels.flatten()
