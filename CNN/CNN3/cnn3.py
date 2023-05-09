@@ -119,12 +119,12 @@ all_data = np.stack([train_acc_reshaped, train_gyro_reshaped, train_grav_reshape
 
 all_Label = np.append(train_Label, test_Label, axis=-1)
 
-# 70% training data + labels
-train_data = all_data[: int(all_data.shape[0]*0.7)]
-# 30% testing data + labels
-test_data = all_data[int(all_data.shape[0]*0.7):]
-train_labels = all_Label[: int(all_Label.shape[0]*0.7)]
-test_labels = all_Label[int(all_Label.shape[0]*0.7):]
+# 90% training data + labels
+train_data = all_data[: int(all_data.shape[0]*0.9)]
+# 10% testing data + labels
+test_data = all_data[int(all_data.shape[0]*0.9):]
+train_labels = all_Label[: int(all_Label.shape[0]*0.9)]
+test_labels = all_Label[int(all_Label.shape[0]*0.9):]
 
 print("\nShape of training and testin data + labels...\n")
 print(train_data.shape, test_data.shape)

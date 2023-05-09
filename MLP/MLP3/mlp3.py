@@ -169,7 +169,7 @@ outputLSTM = 100
 
 # Parameters of the dense layer
 activationMLP = 'relu'
-inputMLP = 500
+inputMLP = 1000
 
 # Training parameters
 batchSize = 400
